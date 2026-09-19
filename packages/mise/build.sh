@@ -2,16 +2,25 @@ TERMUX_PKG_HOMEPAGE=https://mise.jdx.dev/
 TERMUX_PKG_DESCRIPTION="dev tools, env vars, task runner"
 TERMUX_PKG_LICENSE="MIT"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="2026.7.5"
+TERMUX_PKG_VERSION="2026.9.11"
 TERMUX_PKG_SRCURL="https://github.com/jdx/mise/archive/refs/tags/v${TERMUX_PKG_VERSION}.tar.gz"
-TERMUX_PKG_SHA256=51a980970caad3f7db89135ded8a6e91d8c95eeec02b6204d29404580373b9db
+TERMUX_PKG_SHA256=f8af039b86af2046635e959ac4eff7bdfed9386cbfa70da4dae544baaf85476e
 TERMUX_PKG_DEPENDS="bzip2, openssl"
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_AUTO_UPDATE=true
 TERMUX_PKG_UPDATE_TAG_TYPE=latest-release-tag
 
 termux_step_pre_configure() {
+	termux_setup_cmake
 	termux_setup_rust
+
+	# Dummy CMake toolchain file to workaround build error:
+	# error: failed to run custom build command for `libz-ng-sys v1.1.29`
+	# ...
+	# CMake Error at /home/builder/.termux-build/_cache/cmake-4.4.0/share/cmake-4.4/Modules/Platform/Android-Determine.cmake:217 (message):
+	# Android: Neither the NDK or a standalone toolchain was found.
+	export TARGET_CMAKE_TOOLCHAIN_FILE="${TERMUX_PKG_BUILDDIR}/android.toolchain.cmake"
+	touch "${TERMUX_PKG_BUILDDIR}/android.toolchain.cmake"
 
 	# Vendor cargo deps to ./vendor-termux/ - not ./vendor/ - because mise's
 	# tree ships ./vendor/aqua-registry/ as build-time data (build.rs reads
@@ -22,10 +31,22 @@ termux_step_pre_configure() {
 	find ./vendor-termux \
 		-mindepth 1 -maxdepth 1 -type d \
 		! -wholename ./vendor-termux/cc \
+		! -wholename ./vendor-termux/sonic-rs \
+		! -wholename ./vendor-termux/sonic-simd \
 		-exec rm -rf '{}' \;
 
-	patch="$TERMUX_PKG_BUILDER_DIR/rust-cc-do-not-concatenate-all-the-CFLAGS.diff"
-	dir="vendor-termux/cc"
+	local patch="$TERMUX_PKG_BUILDER_DIR/rust-cc-do-not-concatenate-all-the-CFLAGS.diff"
+	local dir="vendor-termux/cc"
+	echo "Applying patch: $patch"
+	patch -p1 -d "$dir" < "$patch"
+
+	patch="$TERMUX_PKG_BUILDER_DIR/sonic-simd-32-bit-x86.diff"
+	dir="vendor-termux/sonic-simd"
+	echo "Applying patch: $patch"
+	patch -p1 -d "$dir" < "$patch"
+
+	patch="$TERMUX_PKG_BUILDER_DIR/sonic-rs-32-bit-x86.diff"
+	dir="vendor-termux/sonic-rs"
 	echo "Applying patch: $patch"
 	patch -p1 -d "$dir" < "$patch"
 
@@ -33,6 +54,8 @@ termux_step_pre_configure() {
 
 		[patch.crates-io]
 		cc = { path = "./vendor-termux/cc" }
+		sonic-rs = { path = "./vendor-termux/sonic-rs" }
+		sonic-simd = { path = "./vendor-termux/sonic-simd" }
 	EOL
 
 	local -u env_host="${CARGO_TARGET_NAME//-/_}"

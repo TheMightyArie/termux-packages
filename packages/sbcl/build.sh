@@ -3,15 +3,15 @@ TERMUX_PKG_DESCRIPTION="A high performance Common Lisp compiler"
 TERMUX_PKG_LICENSE="custom"
 TERMUX_PKG_LICENSE_FILE="COPYING"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="2.6.6"
+TERMUX_PKG_VERSION="2.6.8"
 # sourceforge archive is a precompiled SBCL release for GNU/Linux to use as host Lisp for bootstrapping
 TERMUX_PKG_SRCURL=(
 	https://github.com/sbcl/sbcl/archive/refs/tags/sbcl-${TERMUX_PKG_VERSION}.tar.gz
 	https://sourceforge.net/projects/sbcl/files/sbcl/${TERMUX_PKG_VERSION}/sbcl-${TERMUX_PKG_VERSION}-x86-64-linux-binary.tar.bz2
 )
 TERMUX_PKG_SHA256=(
-	2054f3619d8933b460096d8607107c0c36beded1002bd8b43a32e629571348eb
-	674e98d3aeef5071619aa440396eb7b1ba25ab75a7c0e17c0ed58c6d98f1a60f
+	6dbbc93d9aaead344901187f1b9547370b4a458788adc60fcfd5bdae690c0fc2
+	5391773774b94554a015db9f992370d06937fb6f0cdb0b2142281aebef9e96c1
 )
 TERMUX_PKG_DEPENDS="zstd"
 # TERMUX_ON_DEVICE_BUILD=true  build dependencies: ecl, strace
